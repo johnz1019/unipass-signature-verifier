@@ -1,5 +1,9 @@
 const { Signer } = require('./signer')
-const { keyFromPem, extractPubkey2 } = require('./utils')
+const {
+  keyFromPem,
+  extractPubkey2,
+  pubkeyToUnipassAddress,
+} = require('./utils')
 const { Verifier } = require('./verifier')
 
 // devnet
@@ -16,6 +20,8 @@ async function test() {
 
   const masterPubkey = await extractPubkey2(masterKey)
   const localPubkey = await extractPubkey2(localKey)
+
+  console.log('CKB address', pubkeyToUnipassAddress(masterPubkey))
 
   // sign message
   const signer = new Signer()

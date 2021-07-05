@@ -1,4 +1,13 @@
-const { Hasher, Blake2bHasher } = require('@lay2/pw-core')
+const {
+  Hasher,
+  Blake2bHasher,
+  Reader,
+  Script,
+  AddressPrefix,
+  HashType,
+  default: PWCore,
+  ChainID,
+} = require('@lay2/pw-core')
 const NodeRSA = require('node-rsa')
 
 async function extractPubkey2(privaKey) {
@@ -19,7 +28,7 @@ async function extractPubkey2(privaKey) {
 
   const pubKey = Buffer.concat([sizeVec, eVec, nVec])
   // console.log('pubKey', pubKey.toString('hex'));
-  return pubKey.toString('hex')
+  return `0x${pubKey.toString('hex')}`
 }
 
 function signMessage(masterKey, messageHex) {
@@ -78,11 +87,38 @@ function pubkeyToNodeRsaKey(pubkey) {
   return key
 }
 
+function pubkeyToUnipassAddress(pubkey, testnet = false) {
+  const args = new Blake2bHasher()
+    .hash(new Reader(pubkey))
+    .serializeJson()
+    .slice(0, 42)
+  let script
+  if (testnet) {
+    script = new Script(
+      '0x124a60cd799e1fbca664196de46b3f7f0ecb7138133dcaea4893c51df5b02be6',
+      args,
+      HashType.type,
+    )
+  } else {
+    script = new Script(
+      '0x614d40a86e1b29a8f4d8d93b9f3b390bf740803fa19a69f1c95716e029ea09b3',
+      args,
+      HashType.type,
+    )
+  }
+
+  PWCore.chainId = testnet ? ChainID.ckb_testnet : ChainID.ckb
+  const prefix = testnet ? AddressPrefix.ckt : AddressPrefix.ckb
+  return script.toAddress(prefix).toCKBAddress()
+}
+
 module.exports = {
   signMessage,
   keyFromPem,
+
   getMasterAuth,
   getPubkeyHash,
   extractPubkey2,
   pubkeyToNodeRsaKey,
+  pubkeyToUnipassAddress,
 }
